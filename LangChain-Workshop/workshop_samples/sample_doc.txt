@@ -1,0 +1,6 @@
+LangChain is a development framework that enables applications to harness large language models in a modular way.
+Its core concepts include prompt templates, chains, agents, tools, and memory.
+LangChain is especially powerful for retrieval-augmented generation, where external data sources are combined with model reasoning.
+The framework supports text splitting, vector embeddings, and vector stores for fast document search.
+LangChain apps often use external tools to answer questions, compute results, or fetch live data.
+By organizing prompts and model calls into reusable chains, developers can build reliable AI applications faster.

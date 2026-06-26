@@ -1,0 +1,144 @@
+"""
+AWS CloudFormation template for deploying sentiment analysis model on SageMaker.
+"""{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "CloudFormation template for NLP Sentiment Analysis deployment on AWS",
+    "Parameters": {
+        "ECRImageUri": {
+            "Type": "String",
+            "Description": "ECR image URI for the model container"
+        },
+        "SageMakerExecutionRole": {
+            "Type": "String",
+            "Description": "IAM role ARN for SageMaker"
+        },
+        "InstanceType": {
+            "Type": "String",
+            "Default": "ml.m5.large",
+            "Description": "SageMaker instance type"
+        }
+    },
+    "Resources": {
+        "S3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": {
+                    "Fn::Sub": "nlp-sentiment-models-${AWS::AccountId}"
+                },
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                },
+                "PublicAccessBlockConfiguration": {
+                    "BlockPublicAcls": true,
+                    "BlockPublicPolicy": true,
+                    "IgnorePublicAcls": true,
+                    "RestrictPublicBuckets": true
+                }
+            }
+        },
+        "SageMakerModel": {
+            "Type": "AWS::SageMaker::Model",
+            "Properties": {
+                "ModelName": "sentiment-analysis-model",
+                "PrimaryContainer": {
+                    "Image": {
+                        "Ref": "ECRImageUri"
+                    },
+                    "ModelDataUrl": {
+                        "Fn::Sub": "s3://${S3Bucket}/model.tar.gz"
+                    }
+                },
+                "ExecutionRoleArn": {
+                    "Ref": "SageMakerExecutionRole"
+                }
+            }
+        },
+        "SageMakerEndpointConfig": {
+            "Type": "AWS::SageMaker::EndpointConfig",
+            "Properties": {
+                "EndpointConfigName": "sentiment-analysis-config",
+                "ProductionVariants": [
+                    {
+                        "VariantName": "Primary",
+                        "ModelName": {
+                            "Fn::GetAtt": [
+                                "SageMakerModel",
+                                "ModelName"
+                            ]
+                        },
+                        "InitialInstanceCount": 1,
+                        "InstanceType": {
+                            "Ref": "InstanceType"
+                        },
+                        "InitialVariantWeight": 1
+                    }
+                ]
+            }
+        },
+        "SageMakerEndpoint": {
+            "Type": "AWS::SageMaker::Endpoint",
+            "Properties": {
+                "EndpointName": "sentiment-analysis-endpoint",
+                "EndpointConfigName": {
+                    "Fn::GetAtt": [
+                        "SageMakerEndpointConfig",
+                        "EndpointConfigName"
+                    ]
+                }
+            }
+        },
+        "ECRRepository": {
+            "Type": "AWS::ECR::Repository",
+            "Properties": {
+                "RepositoryName": "nlp-sentiment-analysis",
+                "ImageScanningConfiguration": {
+                    "ScanOnPush": true
+                },
+                "LifecyclePolicy": {
+                    "LifecyclePolicyText": {
+                        "rules": [
+                            {
+                                "rulePriority": 1,
+                                "description": "Keep last 10 images",
+                                "selection": {
+                                    "tagStatus": "any",
+                                    "countType": "imageCountMoreThan",
+                                    "countNumber": 10
+                                },
+                                "action": {
+                                    "type": "expire"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "S3BucketName": {
+            "Description": "S3 bucket for models",
+            "Value": {
+                "Ref": "S3Bucket"
+            }
+        },
+        "SageMakerEndpoint": {
+            "Description": "SageMaker endpoint URL",
+            "Value": {
+                "Fn::GetAtt": [
+                    "SageMakerEndpoint",
+                    "EndpointName"
+                ]
+            }
+        },
+        "ECRRepositoryUri": {
+            "Description": "ECR repository URI",
+            "Value": {
+                "Fn::GetAtt": [
+                    "ECRRepository",
+                    "RepositoryUri"
+                ]
+            }
+        }
+    }
+}

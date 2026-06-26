@@ -1,0 +1,47 @@
+# Configuration file for training pipeline.
+
+# Data configuration
+data:
+  source: "huggingface"  # 'huggingface' or 'local' (huggingface used in local mode)
+  dataset_name: "imdb"  # For HuggingFace
+  path: "data/raw/reviews.csv"  # For local data
+  split: "train"
+  text_column: "text"
+  label_column: "label"
+  sample_size: 500  # Reduced for local mode testing
+
+# Path configuration
+paths:
+  data_dir: "data"
+  model_dir: "models"
+  logs_dir: "logs"
+
+# Training configuration
+training:
+  model_name: "distilbert-base-uncased"  # Smaller model for local testing
+  num_labels: 2
+  num_epochs: 1  # Reduced for local mode
+  batch_size: 16  # Reduced for local mode
+  learning_rate: 2.0e-5
+  max_length: 256  # Reduced for local mode
+  test_size: 0.2
+  warmup_steps: 100  # Reduced for local mode
+  experiment_name: "sentiment-analysis-local"
+  use_cuda: false  # Disable GPU in local mode by default
+
+# MLflow configuration
+mlflow:
+  tracking_uri: null  # Set to remote server if needed
+  registry_uri: null
+
+# AWS configuration (disabled in local mode)
+aws:
+  enabled: false
+  region: "us-east-1"
+  s3_bucket: "nlp-sentiment-models"
+  sagemaker_role_arn: null
+
+# Local mode configuration
+local_mode:
+  enabled: true
+  use_sample_data: true
