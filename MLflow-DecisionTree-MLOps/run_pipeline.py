@@ -14,7 +14,7 @@ from src.models.evaluate import evaluate_model
 
 def run_pipeline(experiment: str, max_depth: int, test_size: float, random_state: int):
     project_root = Path(__file__).resolve().parent
-    mlruns_path = f"file://{project_root / 'mlruns'}"
+    mlruns_path = (project_root / "mlruns").as_uri()
     mlflow.set_tracking_uri(mlruns_path)
     mlflow.set_experiment(experiment)
 
